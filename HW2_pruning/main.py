@@ -108,7 +108,11 @@ def read_prune_ratios_from_yaml(file_name, model):
                 import pdb;pdb.set_trace()
 
                 # ===== your code starts from here ======
-
+                model_layer_names = [name for name, _ in model.named_modules() if name != '']
+                for layer_name in prune_ratio_dict.keys():
+                    base_name = layer_name.replace('.weight', '')
+                    if base_name not in model_layer_names:
+                        raise ValueError(f"Layer name '{layer_name}' in YAML file does not match any layer in the model.")
 
                 # ===== your code ends here ======
 
