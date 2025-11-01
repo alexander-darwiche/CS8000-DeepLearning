@@ -127,7 +127,6 @@ def read_prune_ratios_from_yaml(file_name, model):
 
 
 def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
-    print('hi')
     """
     Implement magnitude-based unstructured pruning for weight tensor (of a layer)
     :param tensor: torch.(cuda.)Tensor, weight of conv/fc layer
@@ -136,28 +135,33 @@ def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     :return:
         torch.(cuda.)Tensor, pruning mask (1 for nonzeros, 0 for zeros)
     """
-
-    ##################### YOUR CODE STARTS HERE #####################
-    # Step 1: Calculate how many weights should be pruned
     import pdb;pdb.set_trace()
+    ##################### YOUR CODE STARTS HERE #####################
+    # Flatten and exclude already-zero weights
+    nonzero_weights = tensor[torch.abs(tensor) > 0]
+
+    # Step 1: Calculate how many weights should be pruned
+    weights_to_prune = int(sparsity * tensor.numel())
 
     # Step 2: Find the threshold of weight magnitude (th) based on sparsity.
+    weight_threshold = torch.topk(torch.abs(nonzero_weights).view(-1), weights_to_prune, largest=False).values.max()
 
     # Step 3: Get the pruning mask tensor based on the th. The mask tensor should have same shape as the weight tensor
     #         |weight| <= th -> mask=0,
     #         |weight| >  th -> mask=1
+    mask = (torch.abs(tensor) > weight_threshold & (tensor != 0)).float()
 
     # Step 4: Apply mask tensor to the weight tensor
     #         weight_pruned = weight * mask
+
+    pruned_tensor = tensor * mask
 
     ##################### YOUR CODE ENDS HERE #######################
 
     # return the mask to record the pruning location ()
     return mask
 
-
 def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
-    print('hi')
     """
     implement L2-norm-based filter pruning for weight tensor (of a layer)
     :param tensor: torch.(cuda.)Tensor, weight of conv/fc layer
@@ -166,36 +170,73 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     :return:
         torch.(cuda.)Tensor, pruning mask (1 for nonzeros, 0 for zeros)
     """
-
+    import pdb;pdb.set_trace()
     ##################### YOUR CODE STARTS HERE #####################
-    # Step 1: Calculate how many filters should be pruned
 
+    # Flatten and exclude already-zero weights
+    nonzero_weights = tensor[torch.abs(tensor) > 0]
+
+    # Step 1: Calculate how many filters should be pruned
+    weights_to_prune = int(sparsity * tensor.numel())
+    
     # Step 2: Find the threshold of filter's L2-norm (th) based on sparsity.
+    num_filters = tensor.shape[0]
+    filter_norms = torch.norm(tensor.view(num_filters, -1), p=2, dim=1)
+
+    active_mask = (filter_norms > 0)
+    active_norms = filter_norms[active_mask]
+
+    num_filters_to_prune = int(sparsity * active_norms.numel())
+
+
+    filter_threshold = torch.topk(active_norms, num_filters_to_prune, largest=False).values.max()      
 
     # Step 3: Get the pruning mask tensor based on the th. The mask tensor should have same shape as the weight tensor
     #         ||filter||2 <= th -> mask=0,
     #         ||filter||2 >  th -> mask=1
+    mask = (filter_norms > filter_threshold & (filter_norms > 0)).float().view(-1, 1, 1, 1)
 
     # Step 4: Apply mask tensor to the weight tensor
     #         weight_pruned = weight * mask
+    pruned_tensor = tensor * mask
 
     ##################### YOUR CODE ENDS HERE #######################
 
     # return the mask to record the pruning location ()
     return mask
 
-
-def apply_pruning():
-    print('hi')
+def apply_pruning(model, sparsity_type, prune_ratio_dict):
     # calculate layer_wise prune ratio for current round (if IMP)
-    
+
     # call unstructured_prune()  
     # or 
     # call filter_prune (...)
+    if sparsity_type == 'unstructured':
+        # call unstructured_prune() for each layer
+        for name, module in model.named_modules():
+            if name in prune_ratio_dict:
+                sparsity = prune_ratio_dict[name]
+                # call unstructured_prune() to get the mask
+                # then apply the mask to the weight
+                mask = unstructured_prune(module.weight, sparsity)
+                module.weight.data = module.weight.data * mask
+        pass
 
+    elif sparsity_type == 'filter':
+        # call filter_prune() for each layer
+        for name, module in model.named_modules():
+            if name in prune_ratio_dict:
+                sparsity = prune_ratio_dict[name]
+                # call filter_prune() to get the mask
+                # then apply the mask to the weight
+                mask = filter_prune(module.weight, sparsity)
+                module.weight.data = module.weight.data * mask
+        pass
+
+    return model
 
 def test_sparsity(model, sparisty_type):
-    print('hi')
+    
     # This function is used to check the model sparsity.
     # It should be able to print the sparisty ratio of each layer.
 
@@ -226,10 +267,9 @@ def test_sparsity(model, sparisty_type):
     #       ...
     # ---------------------------------------------------------------------------
     # total number of filters: 2944, empty-filters: 0, overall filter sparsity is: 0.0000
-
-
-def masked_retrain():
     print('hi')
+
+def masked_retrain(mask, weight, optimizer, loss):
     # when you fine-tune your pruned model, you only want to update the remaining weights (i.e., the weights that are not pruned),
     # while keeping the pruned weights to be 0.
     # A simple way to achieve this is:
@@ -246,17 +286,23 @@ def masked_retrain():
     #       optimizer.step()
     #       # Here you may need a loop to loop over entire model layer by layer, then
     #       weight = weight * mask 
+    for i in range(args.epochs):
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        # Here you may need a loop to loop over entire model layer by layer, then
+        weight = weight * mask
 
 
-def oneshot_magnitude_prune(model, sparity_type, prune_ratio_dict):
-    print('hi')
+def oneshot_magnitude_prune(model, sparsity_type, prune_ratio_dict):
     # Implement the function that conducting oneshot magnitude pruning
     # Target sparsity ratio dict should contains the sparsity ratio of each layer
     # the per-layer sparsity ratio should be read from a external .yaml file
     # This function should also include the masked_retrain() function to conduct fine-tuning to restore the accuracy
+    apply_pruning(model, sparsity_type, prune_ratio_dict)
+    masked_retrain()
 
-def iterative_magnitude_prune():
-    print('hi')
+def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict):
     # Implement the function that conducting iterative magnitude pruning
     # Target sparsity ratio dict should contains the sparsity ratio of each layer
     # the per-layer sparsity ratio should be read from a external .yaml file
@@ -266,9 +312,17 @@ def iterative_magnitude_prune():
     # At each sparsity level, you need to retrain your model. 
     # Therefore, this IMP method requires more overall training epochs than OMP.
     # ** IMP method needs to use at least 3 iterations.
+    iterations = 5
+
+    # calculate layer-wise prune ratio for current round (if IMP)
+    for name in prune_ratio_dict:
+        prune_ratio_dict[name] = prune_ratio_dict[name] / iterations  # e.g., if total target sparsity is 60%, then each round prune 20%
+
+    for _ in range(iterations):  # e.g., 5 iterations
+        apply_pruning(model, sparsity_type, prune_ratio_dict)
+        masked_retrain()
 
 def prune_channels_after_filter_prune():
-    print('hi')
     # 
     # You need to implement this function to complete the following task:
     # 1. This function takes a filter pruned and fine-tuned model as input
@@ -296,7 +350,7 @@ def prune_channels_after_filter_prune():
     # 2. Will accuray decrease, increase, or not change?
     # 3. Based on question 2, explain why?
     # 4. Can we apply this function to ResNet and get the same conclusion? Why?
-
+    print('hi')
 
 def main():
 
@@ -333,7 +387,14 @@ def main():
     # ========= your code starts here ========
 
     prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
-    import pdb;pdb.set_trace()
+
+    if args.sparsity_method == 'omp':
+        oneshot_magnitude_prune(model, args.sparsity_type, prune_dict)
+    elif args.sparsity_method == 'imp':
+        iterative_magnitude_prune(model, args.sparsity_type, prune_dict)
+    else:
+        raise Exception("sparsity_method not supported")
+    
     """
         main()
             |- read_prune_ratios_from_yaml()
@@ -350,7 +411,5 @@ def main():
 
     # ========================================
     
-
-
 if __name__ == '__main__':
     main()
