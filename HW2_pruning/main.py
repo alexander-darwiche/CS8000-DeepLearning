@@ -105,7 +105,8 @@ def read_prune_ratios_from_yaml(file_name, model):
             try:
                 raw_dict = yaml.safe_load(stream)
                 prune_ratio_dict = raw_dict['prune_ratios']
-
+                
+                import pdb;pdb.set_trace()
                 # ===== your code starts from here ======
                 model_layer_names = [name for name, _ in model.named_modules() if name != '']
                 for layer_name in prune_ratio_dict.keys():
@@ -119,6 +120,8 @@ def read_prune_ratios_from_yaml(file_name, model):
 
             except yaml.YAMLError as exc:
                 print(exc)
+        
+        return prune_ratio_dict
 
 
 def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
@@ -134,6 +137,7 @@ def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
 
     ##################### YOUR CODE STARTS HERE #####################
     # Step 1: Calculate how many weights should be pruned
+
 
     # Step 2: Find the threshold of weight magnitude (th) based on sparsity.
 
@@ -327,6 +331,7 @@ def main():
     # ========= your code starts here ========
 
     read_prune_ratios_from_yaml(args.yaml_path, model)
+
     """
         main()
             |- read_prune_ratios_from_yaml()
