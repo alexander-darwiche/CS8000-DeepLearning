@@ -105,7 +105,6 @@ def read_prune_ratios_from_yaml(file_name, model):
             try:
                 raw_dict = yaml.safe_load(stream)
                 prune_ratio_dict = raw_dict['prune_ratios']
-                import pdb;pdb.set_trace()
 
                 # ===== your code starts from here ======
                 model_layer_names = [name for name, _ in model.named_modules() if name != '']
