@@ -110,7 +110,8 @@ def read_prune_ratios_from_yaml(file_name, model):
 
                 # Step 1: Get all layer names of the model (only consider CONV layers here)
                 model_layer_names = [name for name, module in model.named_modules() if name != '' and isinstance(module, torch.nn.Conv2d)]
-
+                print(model_layer_names)
+                
                 # Step 2: Check if the layer names in prune_ratio_dict match the model layer names
                 for layer_name in prune_ratio_dict.keys():
                     base_name = layer_name.replace('.weight', '')
