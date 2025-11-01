@@ -23,7 +23,7 @@ parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='training batch size (default: 64)')
 parser.add_argument('--seed', type=int, default=1, metavar='S',
                     help='random seed (default: 1)')
-parser.add_argument('--load-model-path', type=str, default="./cifar10_vgg16_pretrained.pt",
+parser.add_argument('--load-model-path', type=str, default="./model/cifar10_vgg13_acc_94.730.pt",
                     help='Path to pretrained model')
 parser.add_argument('--sparsity-type', type=str, default='unstructured',
                     help="define sparsity_type: [unstructured, filter, etc.]")
@@ -105,6 +105,7 @@ def read_prune_ratios_from_yaml(file_name, model):
             try:
                 raw_dict = yaml.safe_load(stream)
                 prune_ratio_dict = raw_dict['prune_ratios']
+                import pdb;pdb.set_trace()
 
                 # ===== your code starts from here ======
 
@@ -118,6 +119,7 @@ def read_prune_ratios_from_yaml(file_name, model):
 
 
 def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
+    print('hi')
     """
     Implement magnitude-based unstructured pruning for weight tensor (of a layer)
     :param tensor: torch.(cuda.)Tensor, weight of conv/fc layer
@@ -146,6 +148,7 @@ def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
 
 
 def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
+    print('hi')
     """
     implement L2-norm-based filter pruning for weight tensor (of a layer)
     :param tensor: torch.(cuda.)Tensor, weight of conv/fc layer
@@ -174,6 +177,7 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
 
 
 def apply_pruning():
+    print('hi')
     # calculate layer_wise prune ratio for current round (if IMP)
     
     # call unstructured_prune()  
@@ -182,6 +186,7 @@ def apply_pruning():
 
 
 def test_sparsity(model, sparisty_type):
+    print('hi')
     # This function is used to check the model sparsity.
     # It should be able to print the sparisty ratio of each layer.
 
@@ -215,6 +220,7 @@ def test_sparsity(model, sparisty_type):
 
 
 def masked_retrain():
+    print('hi')
     # when you fine-tune your pruned model, you only want to update the remaining weights (i.e., the weights that are not pruned),
     # while keeping the pruned weights to be 0.
     # A simple way to achieve this is:
@@ -234,12 +240,14 @@ def masked_retrain():
 
 
 def oneshot_magnitude_prune(model, sparity_type, prune_ratio_dict):
+    print('hi')
     # Implement the function that conducting oneshot magnitude pruning
     # Target sparsity ratio dict should contains the sparsity ratio of each layer
     # the per-layer sparsity ratio should be read from a external .yaml file
     # This function should also include the masked_retrain() function to conduct fine-tuning to restore the accuracy
 
 def iterative_magnitude_prune():
+    print('hi')
     # Implement the function that conducting iterative magnitude pruning
     # Target sparsity ratio dict should contains the sparsity ratio of each layer
     # the per-layer sparsity ratio should be read from a external .yaml file
@@ -251,6 +259,7 @@ def iterative_magnitude_prune():
     # ** IMP method needs to use at least 3 iterations.
 
 def prune_channels_after_filter_prune():
+    print('hi')
     # 
     # You need to implement this function to complete the following task:
     # 1. This function takes a filter pruned and fine-tuned model as input
@@ -313,6 +322,8 @@ def main():
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs * len(train_loader), eta_min=4e-08)
 
     # ========= your code starts here ========
+
+    read_prune_ratios_from_yaml(args.yaml_path, model)
     """
         main()
             |- read_prune_ratios_from_yaml()
