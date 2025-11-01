@@ -106,9 +106,12 @@ def read_prune_ratios_from_yaml(file_name, model):
                 raw_dict = yaml.safe_load(stream)
                 prune_ratio_dict = raw_dict['prune_ratios']
                 
-                import pdb;pdb.set_trace()
                 # ===== your code starts from here ======
-                model_layer_names = [name for name, _ in model.named_modules() if name != '']
+
+                # Step 1: Get all layer names of the model (only consider CONV layers here)
+                model_layer_names = [name for name, module in model.named_modules() if name != '' and isinstance(module, torch.nn.Conv2d)]
+
+                # Step 2: Check if the layer names in prune_ratio_dict match the model layer names
                 for layer_name in prune_ratio_dict.keys():
                     base_name = layer_name.replace('.weight', '')
                     if base_name not in model_layer_names:
@@ -120,8 +123,6 @@ def read_prune_ratios_from_yaml(file_name, model):
 
             except yaml.YAMLError as exc:
                 print(exc)
-        
-        return prune_ratio_dict
 
 
 def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
@@ -137,7 +138,7 @@ def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
 
     ##################### YOUR CODE STARTS HERE #####################
     # Step 1: Calculate how many weights should be pruned
-
+    import pdb;pdb.set_trace()
 
     # Step 2: Find the threshold of weight magnitude (th) based on sparsity.
 
@@ -330,7 +331,7 @@ def main():
 
     # ========= your code starts here ========
 
-    read_prune_ratios_from_yaml(args.yaml_path, model)
+    prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
 
     """
         main()
