@@ -320,14 +320,13 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        import pdb;pdb.set_trace()
-        # Here you may need a loop to loop over entire model layer by layer, then
-        for name, param in model.named_parameters():
-            if name in masks:
-                mask = masks[name]
-                param.data.mul_(mask)
-                acc = test(model, device, test_loader)
-                print(f"Epoch {i} training accuracy: {acc}")
+    # Here you may need a loop to loop over entire model layer by layer, then
+    for name, param in model.named_parameters():
+        if name in masks:
+            mask = masks[name]
+            param.data.mul_(mask)
+            acc = test(model, device, test_loader)
+            print(f"Epoch {i} training accuracy: {acc}")
     return model
 
 
