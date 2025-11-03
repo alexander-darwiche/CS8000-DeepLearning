@@ -309,7 +309,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
     #       # Here you may need a loop to loop over entire model layer by layer, then
     #       weight = weight * mask 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    number = 1
+    number = 10
     #args.epoch
     for i in range(number):
         if i % 1 == 0:
