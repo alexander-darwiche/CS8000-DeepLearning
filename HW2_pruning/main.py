@@ -326,6 +326,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             loss.backward()
             optimizer.step()
     # Here you may need a loop to loop over entire model layer by layer, then
+    model.eval()
     for name, param in model.named_parameters():
         if name in masks:
             mask = masks[name]
