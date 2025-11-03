@@ -12,6 +12,22 @@
 
 prune_ratios:
   features.0.weight:
-    0.0
+    0.3
   features.3.weight:
     0.5
+  features.7.weight:
+    0.3
+  features.10.weight:
+    0.4
+  features.14.weight:
+    0.2
+  features.17.weight:
+    0.6
+  features.21.weight:
+    0.5
+  features.24.weight:
+    0.7
+  features.28.weight:
+    0.8
+  features.31.weight:
+    0.9

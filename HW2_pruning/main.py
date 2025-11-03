@@ -431,7 +431,8 @@ def main():
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs * len(train_loader), eta_min=4e-08)
 
     # ========= your code starts here ========
-
+    pre_prune_acc = test(model, device, test_loader)
+    print(f"Pre-prune test accuracy: {pre_prune_acc}")
     prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
     test_sparsity(model, args.sparsity_type)
     if args.sparsity_method == 'omp':
