@@ -274,8 +274,9 @@ def test_sparsity(model, sparisty_type):
         print("Sparsity type is: unstructured pruned")
         total_zeros = 0
         total_weights = 0
-        for name, weight in model.named_parameters():
-            if 'weight' in name:
+        for name, module in model.named_modules():
+            if isinstance(module, torch.nn.Conv2d):
+                weight = module.weight
                 num_zeros = torch.sum(weight == 0).item()
                 num_weights = weight.numel()
                 layer_sparsity = 100. * float(num_zeros) / float(num_weights)
