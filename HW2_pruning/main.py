@@ -324,7 +324,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             for name, param in model.named_parameters():
                 if name in masks:
                     mask = masks[name]
-                    param.data._mul(mask)
+                    param.data.mul_(mask)
     return model
 
 
