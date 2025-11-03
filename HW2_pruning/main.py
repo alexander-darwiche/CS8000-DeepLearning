@@ -320,10 +320,9 @@ def masked_retrain(model, masks, optimizer, train_loader, criterion):
     #       weight = weight * mask 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for i in range(args.epochs):
-        import pdb; pdb.set_trace()
+        if i % 10 == 0:
+            print(f"Epoch {i} training...")
         for inputs, targets in train_loader:
-            if i % 10 == 0:
-                print(f"Epoch {i} training...")
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
