@@ -109,7 +109,6 @@ def read_prune_ratios_from_yaml(file_name, model):
                 # ===== your code starts from here ======
 
                 # Step 1: Get all layer names of the model (only consider CONV layers here)
-                import pdb;pdb.set_trace()
                 model_layer_names = [name for name, module in model.named_modules() if name != '' and isinstance(module, torch.nn.Conv2d)]
                 print(model_layer_names)
 
@@ -136,7 +135,6 @@ def unstructured_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     :return:
         torch.(cuda.)Tensor, pruning mask (1 for nonzeros, 0 for zeros)
     """
-    import pdb;pdb.set_trace()
     ##################### YOUR CODE STARTS HERE #####################
     # Flatten and exclude already-zero weights
     nonzero_weights = tensor[torch.abs(tensor) > 0]
@@ -171,7 +169,6 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     :return:
         torch.(cuda.)Tensor, pruning mask (1 for nonzeros, 0 for zeros)
     """
-    import pdb;pdb.set_trace()
     ##################### YOUR CODE STARTS HERE #####################
 
     # Flatten and exclude already-zero weights
