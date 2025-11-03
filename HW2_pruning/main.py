@@ -317,13 +317,6 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             acc = test(model, device, test_loader)
             print(f"Epoch {i} training accuracy: {acc}")
 
-        model.eval()
-        for name, param in model.named_parameters():
-            if name in masks:
-                mask = masks[name]
-                param.data.mul_(mask)
-                acc = test(model, device, test_loader)
-                print(f"Epoch {i} training accuracy: {acc}")
         model.train()
         for inputs, targets in train_loader:
             inputs, targets = inputs.to(device), targets.to(device)
@@ -332,14 +325,14 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-    # Here you may need a loop to loop over entire model layer by layer, then
-    model.eval()
-    for name, param in model.named_parameters():
-        if name in masks:
-            mask = masks[name]
-            param.data.mul_(mask)
-            acc = test(model, device, test_loader)
-            print(f"Epoch {i} training accuracy: {acc}")
+            for name, param in model.named_parameters():
+                if name in masks:
+                    mask = masks[name]
+                    param.data.mul_(mask)
+        # Here you may need a loop to loop over entire model layer by layer, then
+        model.eval()
+        acc = test(model, device, test_loader)
+        print(f"Epoch {i} training accuracy: {acc}")
     return model
 
 
