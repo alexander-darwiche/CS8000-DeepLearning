@@ -311,8 +311,11 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for i in range(args.epochs):
         if i % 1 == 0:
+            model.eval()
             acc = test(model, device, test_loader)
             print(f"Epoch {i} training accuracy: {acc}")
+
+        model.train()
         for inputs, targets in train_loader:
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
