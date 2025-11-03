@@ -324,6 +324,10 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             loss = criterion(outputs, targets)
             optimizer.zero_grad()
             loss.backward()
+            for name, param in model.named_parameters():
+                if name in masks:
+                    mask = masks[name]
+                    param.data.mul_(mask)
             optimizer.step()
             for name, param in model.named_parameters():
                 if name in masks:
