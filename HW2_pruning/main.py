@@ -345,6 +345,7 @@ def oneshot_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_loader
     # This function should also include the masked_retrain() function to conduct fine-tuning to restore the accuracy
     masks = {}
     model, masks = apply_pruning(model, sparsity_type, prune_ratio_dict, masks)
+    test_sparsity(model, sparsity_type)
     model = masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion)
 
 def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_loader, test_loader, optimizer, criterion):
@@ -366,6 +367,7 @@ def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_load
     masks = {}
     for _ in range(iterations):  # e.g., 5 iterations
         model, masks = apply_pruning(model, sparsity_type, prune_ratio_dict, masks)
+        test_sparsity(model, sparsity_type)
         model = masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion)
 
 def prune_channels_after_filter_prune(model):
