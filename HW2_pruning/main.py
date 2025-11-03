@@ -195,7 +195,7 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     # Step 3: Get the pruning mask tensor based on the th. The mask tensor should have same shape as the weight tensor
     #         ||filter||2 <= th -> mask=0,
     #         ||filter||2 >  th -> mask=1
-    mask = (filter_norms > filter_threshold & (filter_norms > 0)).float().view(-1, 1, 1, 1)
+    mask = (filter_norms > filter_threshold).float().view(-1, 1, 1, 1)
 
     # Step 4: Apply mask tensor to the weight tensor
     #         weight_pruned = weight * mask
