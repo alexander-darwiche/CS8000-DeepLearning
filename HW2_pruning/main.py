@@ -209,29 +209,19 @@ def apply_pruning(model, sparsity_type, prune_ratio_dict, masks):
     # call unstructured_prune()  
     # or 
     # call filter_prune (...)
-    if sparsity_type == 'unstructured':
-        # call unstructured_prune() for each layer
-        for name, module in model.named_modules():
-            if name in prune_ratio_dict:
-                sparsity = prune_ratio_dict[name]
-                # call unstructured_prune() to get the mask
-                # then apply the mask to the weight
-                mask = unstructured_prune(module.weight, sparsity)
-                module.weight.data = module.weight.data * mask
-                masks[name] = mask
-        pass
+    # call unstructured_prune() for each layer
+    for name, param in model.named_parameters():
+        if name in prune_ratio_dict:
+            sparsity = prune_ratio_dict[name]
+            # call unstructured_prune() to get the mask
+            # then apply the mask to the weight
+            if sparsity_type == 'unstructured':
+                mask = unstructured_prune(param, sparsity)
+            elif sparsity_type == 'filter':
+                mask = filter_prune(param, sparsity)
 
-    elif sparsity_type == 'filter':
-        # call filter_prune() for each layer
-        for name, module in model.named_modules():
-            if name in prune_ratio_dict:
-                sparsity = prune_ratio_dict[name]
-                # call filter_prune() to get the mask
-                # then apply the mask to the weight
-                mask = filter_prune(module.weight, sparsity)
-                module.weight.data = module.weight.data * mask
-                masks[name] = mask
-        pass
+            param.data.mul_(mask)
+            masks[name] = mask
 
     return model, masks
 
@@ -331,10 +321,10 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             loss.backward()
             optimizer.step()
             # Here you may need a loop to loop over entire model layer by layer, then
-            for name, module in model.named_modules():
+            for name, param in model.named_parameters():
                 if name in masks:
                     mask = masks[name]
-                    module.weight.data = module.weight.data * mask
+                    param.data._mul(mask)
     return model
 
 
