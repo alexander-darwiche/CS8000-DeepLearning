@@ -310,7 +310,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
     #       weight = weight * mask 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for i in range(args.epochs):
-        if i % 10 == 0:
+        if i % 1 == 0:
             acc = test(model, device, test_loader)
             print(f"Epoch {i} training accuracy: {acc}")
         for inputs, targets in train_loader:
@@ -320,6 +320,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            import pdb;pdb.set_trace()
             # Here you may need a loop to loop over entire model layer by layer, then
             for name, param in model.named_parameters():
                 if name in masks:
