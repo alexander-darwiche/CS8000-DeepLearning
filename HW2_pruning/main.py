@@ -321,7 +321,8 @@ def masked_retrain(model, masks, optimizer, train_loader, criterion):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for i in range(args.epochs):
         for inputs, targets in train_loader:
-
+            if i % 10 == 0:
+                print(f"Epoch {i} training...")
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             loss = criterion(outputs, targets)
@@ -431,7 +432,7 @@ def main():
     # ========= your code starts here ========
 
     prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
-
+    test_sparsity(model, args.sparsity_type)
     if args.sparsity_method == 'omp':
         oneshot_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, optimizer, criterion)
     elif args.sparsity_method == 'imp':
