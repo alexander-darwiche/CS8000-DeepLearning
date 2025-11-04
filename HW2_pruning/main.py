@@ -17,7 +17,7 @@ from vgg_cifar import vgg13
 
 # settings
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 admm training')
-parser.add_argument('--epochs', type=int, default=160, metavar='N',
+parser.add_argument('--epochs', type=int, default=20, metavar='N',
                     help='number of epochs to train (default: 160)')
 parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='training batch size (default: 64)')
@@ -309,12 +309,11 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
     #       # Here you may need a loop to loop over entire model layer by layer, then
     #       weight = weight * mask 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    for i in range(args.epochs):
-        if i % 1 == 0:
-            model.eval()
-            acc = test(model, device, test_loader)
-            print(f"Epoch {i} training accuracy: {acc}")
 
+    model.eval()
+    acc = test(model, device, test_loader)
+    print(f"Epoch {i} training accuracy: {acc}")
+    for i in range(args.epochs):
         model.train()
         for inputs, targets in train_loader:
             inputs, targets = inputs.to(device), targets.to(device)
@@ -331,9 +330,10 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
                         mask = masks[name]
                         param.data.mul_(mask)
         # Here you may need a loop to loop over entire model layer by layer, then
-        model.eval()
-        acc = test(model, device, test_loader)
-        print(f"Epoch {i} training accuracy: {acc}")
+        if i % 10 == 0:
+            model.eval()
+            acc = test(model, device, test_loader)
+            print(f"Epoch {i} training accuracy: {acc}")
     return model
 
 
@@ -341,7 +341,7 @@ def oneshot_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_loader
     # Implement the function that conducting oneshot magnitude pruning
     # Target sparsity ratio dict should contains the sparsity ratio of each layer
     # the per-layer sparsity ratio should be read from a external .yaml file
-    # This function should also include the masked_retrain() function to conduct fine-tuning to restore the accuracy
+    # This function should also include the masked_retrain() function to conduct fine-tuning to restore the accurait 
     masks = {}
     model, masks = apply_pruning(model, sparsity_type, prune_ratio_dict, masks)
     test_sparsity(model, sparsity_type)
