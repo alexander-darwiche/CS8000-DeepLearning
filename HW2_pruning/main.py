@@ -309,9 +309,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
     #       # Here you may need a loop to loop over entire model layer by layer, then
     #       weight = weight * mask 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    number = 10
-    #args.epoch
-    for i in range(number):
+    for i in range(args.epochs):
         if i % 1 == 0:
             model.eval()
             acc = test(model, device, test_loader)
@@ -324,15 +322,14 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
             loss = criterion(outputs, targets)
             optimizer.zero_grad()
             loss.backward()
-            for name, param in model.named_parameters():
-                if name in masks:
-                    mask = masks[name]
-                    param.data.mul_(mask)
             optimizer.step()
-            for name, param in model.named_parameters():
-                if name in masks:
-                    mask = masks[name]
-                    param.data.mul_(mask)
+
+            # Force the pruned weights to be zero
+            with torch.no_grad():
+                for name, param in model.named_parameters():
+                    if name in masks:
+                        mask = masks[name]
+                        param.data.mul_(mask)
         # Here you may need a loop to loop over entire model layer by layer, then
         model.eval()
         acc = test(model, device, test_loader)
