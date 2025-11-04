@@ -57,8 +57,8 @@ def test(model, device, test_loader):
     test_loss /= len(test_loader.dataset)
     accuracy = 100. * float(correct) / float(len(test_loader.dataset))
 
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset), accuracy))
+    # print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.4f}%)\n'.format(
+    #     test_loss, correct, len(test_loader.dataset), accuracy))
 
     return accuracy
 
@@ -287,9 +287,10 @@ def test_sparsity(model, sparisty_type):
                 total_empty_filters += num_empty_filters
                 total_filters += num_filters
                 print(f"(empty/total) filter of {name}.weight is: ({num_empty_filters}/{num_filters}). filter sparsity is: {layer_sparsity:.2f}%")
-        overall_filter_sparsity = 100. * float(total_empty_filters) / float(total_filters)
+        overall_sparsity = 100. * float(total_empty_filters) / float(total_filters)
         print("---------------------------------------------------------------------------")
-        print(f"total number of filters: {total_filters}, empty-filters: {total_empty_filters}, overall filter sparsity is: {overall_filter_sparsity:.4f}")
+        print(f"total number of filters: {total_filters}, empty-filters: {total_empty_filters}, overall filter sparsity is: {overall_sparsity:.4f}")
+    return overall_sparsity
 
 def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion):
     # when you fine-tune your pruned model, you only want to update the remaining weights (i.e., the weights that are not pruned),
@@ -346,6 +347,7 @@ def oneshot_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_loader
     model, masks = apply_pruning(model, sparsity_type, prune_ratio_dict, masks)
     test_sparsity(model, sparsity_type)
     model = masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion)
+    return model 
 
 def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_loader, test_loader, optimizer, criterion):
     # Implement the function that conducting iterative magnitude pruning
@@ -368,6 +370,7 @@ def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_load
         model, masks = apply_pruning(model, sparsity_type, prune_ratio_dict, masks)
         test_sparsity(model, sparsity_type)
         model = masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion)
+    return model
 
 def prune_channels_after_filter_prune(model):
     # 
@@ -437,12 +440,17 @@ def main():
     prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
     test_sparsity(model, args.sparsity_type)
     if args.sparsity_method == 'omp':
-        oneshot_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
+        model = oneshot_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
     elif args.sparsity_method == 'imp':
-        iterative_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
+        model = iterative_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
     else:
         raise Exception("sparsity_method not supported")
     
+    sparsity = test_sparsity(model, args.sparsity_type)
+    save_path = f"./model/cifar10_vgg13_{args.sparsity_type}_{args.sparsity_method}_{sparsity:.2f}_acc_{test(model, device, test_loader):.3f}.pt"
+    torch.save(model.state_dict(), save_path)
+    print(f"Pruned model saved to {save_path}")
+
     """
         main()
             |- read_prune_ratios_from_yaml()
