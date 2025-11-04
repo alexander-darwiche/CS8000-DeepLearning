@@ -313,7 +313,7 @@ def masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion
 
     model.eval()
     acc = test(model, device, test_loader)
-    print(f"Epoch {i} training accuracy: {acc}")
+    print(f"Starting training accuracy: {acc}")
     for i in range(args.epochs):
         model.train()
         for inputs, targets in train_loader:
