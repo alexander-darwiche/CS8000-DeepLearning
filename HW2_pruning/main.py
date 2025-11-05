@@ -184,7 +184,7 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     active_mask = (filter_norms > 0)
     active_norms = filter_norms[active_mask]
 
-    num_filters_to_prune = int(sparsity * active_norms.numel())
+    num_filters_to_prune = int(sparsity * filter_norms.numel())
 
 
     filter_threshold = torch.topk(active_norms, num_filters_to_prune, largest=False).values.max()      
