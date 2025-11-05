@@ -467,7 +467,7 @@ def main():
     prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
     test_sparsity(model, args.sparsity_type)
     import pdb;pdb.set_trace()
-    if args.sparsity_method not in ['omp', 'imp']:
+    if args.sparsity_method in ['omp', 'imp']:
         if args.sparsity_method == 'omp':
             model = oneshot_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
         elif args.sparsity_method == 'imp':
