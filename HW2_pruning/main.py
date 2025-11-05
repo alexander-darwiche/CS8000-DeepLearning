@@ -369,7 +369,7 @@ def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_load
         model = masked_retrain(model, masks, optimizer, train_loader, test_loader, criterion)
     return model
 
-def prune_channels_after_filter_prune(model):
+def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
     # 
     # You need to implement this function to complete the following task:
     # 1. This function takes a filter pruned and fine-tuned model as input
@@ -397,13 +397,28 @@ def prune_channels_after_filter_prune(model):
     # 2. Will accuray decrease, increase, or not change?
     # 3. Based on question 2, explain why?
     # 4. Can we apply this function to ResNet and get the same conclusion? Why?
-    pruned_model = model
+
+    test_accuracy_before = test(model, torch.device("cuda" if torch.cuda.is_available() else "cpu"), test_loader)
+    test_sparsity_before = test_sparsity(model, 'filter')
+    print(f"Test sparsity before pruning channels: {test_sparsity_before}")
+    print(f"Test accuracy before pruning channels: {test_accuracy_before}")
     # Force the pruned weights to be zero
     with torch.no_grad():
+        flag = False
         for name, param in model.named_parameters():
-            if name in masks:
-                mask = masks[name]
-                param.data.mul_(mask)
+                if name in prune_ratio_dict:
+                    num_filters = param.shape[0]
+                    if flag == True: param.data.mul_(mask)
+                    filter_norms = torch.norm(param.view(num_filters, -1), p=2, dim=1)
+                    flag = True
+                    mask = (filter_norms == 0).float().view(-1, 1, 1, 1)
+    
+    test_accuracy_after = test(model, torch.device("cuda" if torch.cuda.is_available() else "cpu"), test_loader)
+    test_sparsity_after = test_sparsity(model, 'filter')
+    print(f"Test sparsity after pruning channels: {test_sparsity_after}")
+    print(f"Test accuracy after pruning channels: {test_accuracy_after}")
+
+    return model
 
 def main():
 
