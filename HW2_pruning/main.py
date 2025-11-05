@@ -405,13 +405,20 @@ def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
     # Force the pruned weights to be zero
     with torch.no_grad():
         flag = False
+        prev_mask = None
+
         for name, param in model.named_parameters():
-                if name in prune_ratio_dict:
-                    num_filters = param.shape[0]
-                    if flag == True: param.data.mul_(mask)
-                    filter_norms = torch.norm(param.view(num_filters, -1), p=2, dim=1)
-                    flag = True
-                    mask = (filter_norms == 0).float().view(-1, 1, 1, 1)
+            if name in prune_ratio_dict:  # Conv layer
+                out_channels, in_channels, _, _ = param.shape
+                
+                if prev_mask is not None:
+                    # Apply previous layer's mask along the input channels
+                    param.data = param.data * prev_mask.view(1, -1, 1, 1)
+                
+                # Compute current layer's pruning mask
+                filter_norms = torch.norm(param.view(out_channels, -1), p=2, dim=1)
+                curr_mask = (filter_norms > 0).float().to(param.device)
+                prev_mask = curr_mask
     
     test_accuracy_after = test(model, torch.device("cuda" if torch.cuda.is_available() else "cpu"), test_loader)
     test_sparsity_after = test_sparsity(model, 'filter')
