@@ -475,8 +475,8 @@ def main():
         else:
             raise Exception("sparsity_method not supported")
         
-        if args.sparsity_type == 'filter':
-            model = prune_channels_after_filter_prune(model, prune_dict, test_loader)   
+        # if args.sparsity_type == 'filter':
+        #     model = prune_channels_after_filter_prune(model, prune_dict, test_loader)   
 
         sparsity = test_sparsity(model, args.sparsity_type)
         save_path = f"./model/cifar10_vgg13_{args.sparsity_type}_{args.sparsity_method}_{sparsity:.2f}_acc_{test(model, device, test_loader):.3f}.pt"
@@ -485,6 +485,9 @@ def main():
     else:
         model = prune_channels_after_filter_prune(model, prune_dict, test_loader)
         sparsity = test_sparsity(model, args.sparsity_type)
+        save_path = f"./model/cifar10_vgg13_{args.sparsity_type}_{args.sparsity_method}_{sparsity:.2f}_acc_{test(model, device, test_loader):.3f}_channelPruned.pt"
+        torch.save(model.state_dict(), save_path)
+        print(f"Pruned model saved to {save_path}")
     """
         main()
             |- read_prune_ratios_from_yaml()
