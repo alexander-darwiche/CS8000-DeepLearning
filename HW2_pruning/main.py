@@ -31,6 +31,7 @@ parser.add_argument('--sparsity-method', type=str, default='omp',
                     help="define sparsity_method: [omp, imp, etc.]")
 parser.add_argument('--yaml-path', type=str, default="./vgg13.yaml",
                     help='Path to yaml file')
+                    
 
 args = parser.parse_args()
 
@@ -465,21 +466,24 @@ def main():
     print(f"Pre-prune test accuracy: {pre_prune_acc}")
     prune_dict = read_prune_ratios_from_yaml(args.yaml_path, model)
     test_sparsity(model, args.sparsity_type)
-    if args.sparsity_method == 'omp':
-        model = oneshot_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
-    elif args.sparsity_method == 'imp':
-        model = iterative_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
+    if args.sparsity_method not in ['omp', 'imp']:
+        if args.sparsity_method == 'omp':
+            model = oneshot_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
+        elif args.sparsity_method == 'imp':
+            model = iterative_magnitude_prune(model, args.sparsity_type, prune_dict, train_loader, test_loader, optimizer, criterion)
+        else:
+            raise Exception("sparsity_method not supported")
+        
+        if args.sparsity_type == 'filter':
+            model = prune_channels_after_filter_prune(model, prune_dict, test_loader)   
+
+        sparsity = test_sparsity(model, args.sparsity_type)
+        save_path = f"./model/cifar10_vgg13_{args.sparsity_type}_{args.sparsity_method}_{sparsity:.2f}_acc_{test(model, device, test_loader):.3f}.pt"
+        torch.save(model.state_dict(), save_path)
+        print(f"Pruned model saved to {save_path}")
     else:
-        raise Exception("sparsity_method not supported")
-    
-    if args.sparsity_type == 'filter':
-        model = prune_channels_after_filter_prune(model, prune_dict, test_loader)   
-
-    sparsity = test_sparsity(model, args.sparsity_type)
-    save_path = f"./model/cifar10_vgg13_{args.sparsity_type}_{args.sparsity_method}_{sparsity:.2f}_acc_{test(model, device, test_loader):.3f}.pt"
-    torch.save(model.state_dict(), save_path)
-    print(f"Pruned model saved to {save_path}")
-
+        model = prune_channels_after_filter_prune(model, prune_dict, test_loader)
+        sparsity = test_sparsity(model, args.sparsity_type)
     """
         main()
             |- read_prune_ratios_from_yaml()
