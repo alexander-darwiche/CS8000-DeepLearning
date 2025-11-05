@@ -175,9 +175,6 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     nonzero_weights = tensor[torch.abs(tensor) > 0]
 
     # Step 1: Calculate how many filters should be pruned
-    weights_to_prune = int(sparsity * tensor.numel())
-    
-    # Step 2: Find the threshold of filter's L2-norm (th) based on sparsity.
     num_filters = tensor.shape[0]
     filter_norms = torch.norm(tensor.view(num_filters, -1), p=2, dim=1)
 
@@ -185,8 +182,8 @@ def filter_prune(tensor: torch.Tensor, sparsity : float) -> torch.Tensor:
     active_norms = filter_norms[active_mask]
 
     num_filters_to_prune = int(sparsity * filter_norms.numel())
-
-
+    
+    # Step 2: Find the threshold of filter's L2-norm (th) based on sparsity.
     filter_threshold = torch.topk(active_norms, num_filters_to_prune, largest=False).values.max()      
 
     # Step 3: Get the pruning mask tensor based on the th. The mask tensor should have same shape as the weight tensor
@@ -359,7 +356,7 @@ def iterative_magnitude_prune(model, sparsity_type, prune_ratio_dict, train_load
     # At each sparsity level, you need to retrain your model. 
     # Therefore, this IMP method requires more overall training epochs than OMP.
     # ** IMP method needs to use at least 3 iterations.
-    iterations = 5
+    iterations = 3
 
     # calculate layer-wise prune ratio for current round (if IMP)
     for name in prune_ratio_dict:
@@ -401,6 +398,12 @@ def prune_channels_after_filter_prune(model):
     # 3. Based on question 2, explain why?
     # 4. Can we apply this function to ResNet and get the same conclusion? Why?
     pruned_model = model
+    # Force the pruned weights to be zero
+    with torch.no_grad():
+        for name, param in model.named_parameters():
+            if name in masks:
+                mask = masks[name]
+                param.data.mul_(mask)
 
 def main():
 
