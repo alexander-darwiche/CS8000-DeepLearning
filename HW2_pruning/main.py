@@ -397,7 +397,8 @@ def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
     # 2. Will accuray decrease, increase, or not change?
     # 3. Based on question 2, explain why?
     # 4. Can we apply this function to ResNet and get the same conclusion? Why?
-
+    
+    model.load_model_state_dict(torch.load(args.load_model_path))
     test_accuracy_before = test(model, torch.device("cuda" if torch.cuda.is_available() else "cpu"), test_loader)
     test_sparsity_before = test_sparsity(model, 'filter')
     print(f"Test sparsity before pruning channels: {test_sparsity_before}")
