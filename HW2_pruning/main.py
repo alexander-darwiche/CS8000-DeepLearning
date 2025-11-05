@@ -405,6 +405,7 @@ def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
     print(f"Test sparsity before pruning channels: {test_sparsity_before}")
     print(f"Test accuracy before pruning channels: {test_accuracy_before}")
     # Force the pruned weights to be zero
+    import pdb;pdb.set_trace()
     with torch.no_grad():
         flag = False
         prev_mask = None
