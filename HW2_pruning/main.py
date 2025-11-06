@@ -417,7 +417,7 @@ def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
                 
                 if prev_mask is not None:
                     # Apply previous layer's mask along the input channels
-                    param.data = param.data * prev_mask.view(1, -1, 1, 1)
+                    param.data.mul_(prev_mask.view(1, -1, 1, 1))
                 
                 # Compute current layer's pruning mask
                 filter_norms = torch.norm(param.view(out_channels, -1), p=2, dim=1)
