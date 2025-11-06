@@ -12,8 +12,6 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms
 import numpy as np
 import yaml
-from thop import profile
-
 
 from vgg_cifar import vgg13
 
@@ -401,78 +399,33 @@ def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
     # 3. Based on question 2, explain why?
     # 4. Can we apply this function to ResNet and get the same conclusion? Why?
     
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # --- Load model ---
     model.load_state_dict(torch.load(args.load_model_path))
-    model = model.to(device)
-    model.eval()
-
-    # --- Helper functions ---
-    def count_nonzero_params(model):
-        total = 0
-        nonzero = 0
-        for p in model.parameters():
-            total += p.numel()
-            nonzero += p.nonzero().size(0)
-        sparsity = 100 * (1 - nonzero / total)
-        return total, nonzero, sparsity
-
-    def measure_flops(model):
-        dummy = torch.randn(1, 3, 32, 32).to(device)
-        flops, params = profile(model, inputs=(dummy,), verbose=False)
-        return flops, params
-
-    # --- Before pruning ---
-    print("\n=== BEFORE CHANNEL PRUNING ===")
-    test_accuracy_before = test(model, device, test_loader)
+    test_accuracy_before = test(model, torch.device("cuda" if torch.cuda.is_available() else "cpu"), test_loader)
     test_sparsity_before = test_sparsity(model, 'filter')
-    params_before, nonzero_before, sparsity_pct_before = count_nonzero_params(model)
-    flops_before, _ = measure_flops(model)
-
-    print(f"Test accuracy before pruning channels: {test_accuracy_before:.2f}%")
     print(f"Test sparsity before pruning channels: {test_sparsity_before}")
-    print(f"Params before: {params_before:,}")
-    print(f"Nonzero params before: {nonzero_before:,} ({sparsity_pct_before:.2f}% sparse)")
-    print(f"FLOPs before: {flops_before/1e6:.2f}M")
-
-    # --- Apply pruning (your logic) ---
+    print(f"Test accuracy before pruning channels: {test_accuracy_before}")
+    # Force the pruned weights to be zero
     with torch.no_grad():
-        flag = False
         prev_mask = None
 
         for name, param in model.named_parameters():
             if name in prune_ratio_dict:  # Conv layer
                 out_channels, in_channels, _, _ = param.shape
+                layer_name = name.replace('.weight', '')
 
-                # Apply previous mask along input channels
                 if prev_mask is not None:
+                    # Apply previous layer's mask along the input channels
                     param.data.mul_(prev_mask.view(1, -1, 1, 1))
-
-                # Compute mask for this layer
+                
+                # Compute current layer's pruning mask
                 filter_norms = torch.norm(param.view(out_channels, -1), p=2, dim=1)
                 curr_mask = (filter_norms > 0).float().to(param.device)
                 prev_mask = curr_mask
-
-    # --- After pruning ---
-    print("\n=== AFTER CHANNEL PRUNING ===")
-    test_accuracy_after = test(model, device, test_loader)
+    
+    test_accuracy_after = test(model, torch.device("cuda" if torch.cuda.is_available() else "cpu"), test_loader)
     test_sparsity_after = test_sparsity(model, 'filter')
-    params_after, nonzero_after, sparsity_pct_after = count_nonzero_params(model)
-    flops_after, _ = measure_flops(model)
-
-    print(f"Test accuracy after pruning channels: {test_accuracy_after:.2f}%")
     print(f"Test sparsity after pruning channels: {test_sparsity_after}")
-    print(f"Params after: {params_after:,}")
-    print(f"Nonzero params after: {nonzero_after:,} ({sparsity_pct_after:.2f}% sparse)")
-    print(f"FLOPs after: {flops_after/1e6:.2f}M")
-
-    # --- Summary ---
-    print("\n=== SUMMARY ===")
-    print(f"Accuracy change: {test_accuracy_after - test_accuracy_before:+.2f}%")
-    print(f"Zero-weight increase: {sparsity_pct_after - sparsity_pct_before:+.2f}%")
-    print(f"FLOPs change: {(flops_after - flops_before)/1e6:+.2f}M")
+    print(f"Test accuracy after pruning channels: {test_accuracy_after}")
 
     return model
 
