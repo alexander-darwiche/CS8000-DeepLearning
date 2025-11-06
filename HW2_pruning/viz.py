@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Directory with model files
-model_dir = "model"
+model_dir = "./model"
+outoutput_dir = "./plots"
 
 # Regex to extract sparsity and accuracy from filename
 pattern = re.compile(r".*_(imp|omp)_(\d+\.\d+)_acc_(\d+\.\d+)\.pt")
@@ -51,7 +52,7 @@ plt.ylabel("Accuracy (%)")
 plt.title("Sparsity vs Accuracy (Model Comparison)")
 plt.grid(True, linestyle="--", alpha=0.6)
 plt.tight_layout()
-plt.savefig(os.path.join(model_dir, "sparsity_vs_accuracy_scatter.png"))
+plt.savefig(os.path.join(output_dir, "sparsity_vs_accuracy_scatter.png"))
 plt.close()
 
 # --- (b) Sparsity Mask Visualization ---
