@@ -413,7 +413,6 @@ def prune_channels_after_filter_prune(model, prune_ratio_dict, test_loader):
         for name, param in model.named_parameters():
             if name in prune_ratio_dict:  # Conv layer
                 out_channels, in_channels, _, _ = param.shape
-                import pdb;pdb.set_trace()
                 
                 if prev_mask is not None:
                     # Apply previous layer's mask along the input channels
