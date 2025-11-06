@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+from datetime import datetime
 
 # =========================
 # Configuration
@@ -70,7 +71,8 @@ plt.title("Sparsity vs Accuracy Comparison")
 plt.grid(True, linestyle='--', alpha=0.4)
 plt.tight_layout()
 
-acc_plot_path = output_dir / "sparsity_vs_accuracy.png"
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+acc_plot_path = output_dir / f"sparsity_vs_accuracy_{timestamp}.png"
 plt.savefig(acc_plot_path, dpi=200)
 plt.close()
 print(f"✅ Saved {acc_plot_path}")
@@ -109,7 +111,9 @@ for d in file_data:
     plt.colorbar(label="Nonzero (white=0, black=1)")
     plt.tight_layout()
 
-    mask_path = output_dir / f"mask_{d['model_name']}.png"
+    # unique filename per model
+    safe_name = d['model_name'].replace('.', '_')
+    mask_path = output_dir / f"mask_{safe_name}_{timestamp}.png"
     plt.savefig(mask_path, dpi=200)
     plt.close()
     print(f"✅ Saved {mask_path}")
