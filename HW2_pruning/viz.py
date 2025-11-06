@@ -9,7 +9,7 @@ from datetime import datetime
 # =========================
 # Configuration
 # =========================
-checkpoint_dir = "./"         # folder with .pt files
+checkpoint_dir = "./model"         # folder with .pt files
 output_dir = Path("./plots")  # output folder for figures
 output_dir.mkdir(parents=True, exist_ok=True)
 layer_name = None  # set to None to auto-detect a 4D conv layer
