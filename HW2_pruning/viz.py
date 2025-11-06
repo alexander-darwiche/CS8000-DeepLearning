@@ -53,7 +53,7 @@ plt.savefig(os.path.join(output_dir, "sparsity_vs_accuracy_scatter.png"))
 plt.close()
 print("Saved scatter plot.")
 
-# --- (b) Sparsity / weight magnitude visualization for first layer ---
+# --- (b) Binary Sparsity Mask Visualization for First Layer ---
 layer_name = "features.0.weight"
 
 for m in models:
@@ -66,21 +66,21 @@ for m in models:
     w = state_dict[layer_name]
     F, C, H, W = w.shape
 
-    # Flatten weights per filter
-    w_2d = w.view(F, -1).numpy()
+    # Create binary mask: 1 = kept (nonzero), 0 = pruned
+    mask = (w.view(F, -1) != 0).float().numpy()
 
     plt.figure(figsize=(8, 6))
-    im = plt.imshow(w_2d, cmap="viridis", aspect="auto")  # show actual weight magnitude
-    plt.title(f"Weight Magnitude: {m['name']} — Layer: {layer_name}")
+    im = plt.imshow(mask, cmap="gray_r", aspect="auto")  # black = nonzero, white = zero
+    plt.title(f"Sparsity Mask: {m['name']} — Layer: {layer_name}")
     plt.xlabel("Flattened Filter Weights")
     plt.ylabel("Filters")
 
-    # Colorbar shows weight magnitude
+    # Colorbar shows 0 = pruned, 1 = kept
     cbar = plt.colorbar(im)
-    cbar.set_label("Weight Magnitude")
+    cbar.set_label("Weight Presence (0 = pruned, 1 = kept)")
 
     plt.tight_layout()
-    save_name = os.path.splitext(m["name"])[0] + "_first_layer_weights.png"
+    save_name = os.path.splitext(m["name"])[0] + "_first_layer_mask.png"
     plt.savefig(os.path.join(output_dir, save_name))
     plt.close()
     print(f"Saved {save_name}")
