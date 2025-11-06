@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Directory with model files
-model_dir = "model"
+model_dir = "./model"
 
 # Regex to extract sparsity and accuracy from filename
 pattern = re.compile(r".*_(imp|omp)_(\d+\.\d+)_acc_(\d+\.\d+)\.pt")
